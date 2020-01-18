@@ -1,0 +1,151 @@
+Sub Stockdata()
+'
+'If you run this, delete columns H through Q on each sheet
+'
+'
+
+    'STRINGS
+    Dim Ticker As String
+    Dim TickerList() As String
+    'INTEGERS
+    Dim Volume As Double
+    Dim LastLine As Double
+    Dim i As Double, j As Double
+    Dim VolumeCount As Double
+    Dim LastLineTotalVol As Double
+    Dim TickerOpen As Double
+    Dim TickerClose As Double
+    Dim Greatest_Vol As Double
+    Dim Greatest_Perc_Increase As Double
+    Dim Greatest_Perc_Decrease As Double
+    Dim OpenCloseDifference As Double
+    Dim PercentDecimal As Double
+    
+    
+    Ticker = ""
+    VolumeCount = 0
+
+    
+    'LOOP EACH WS
+    For Each ws In Worksheets
+        'FIND LAST LINE
+        LastLine = ws.Cells(Rows.Count, "A").End(xlUp).Row - 1
+        'SET HEADER
+        ws.Cells(1, 8).Value = "Ticker"
+        ws.Cells(1, 9).Value = "Total Volume"
+        ws.Cells(1, 10).Value = "Yearly Change"
+        ws.Cells(1, 11).Value = "Percent Change"
+        ws.Range("P1").Value = "Ticker"
+        ws.Range("Q1").Value = "Value"
+        ws.Range("O2").Value = "Greatest % Increase"
+        ws.Range("O3").Value = "Greatest % Decrease"
+        ws.Range("O4").Value = "Greatest Total Volume"
+        'LOOP DATA
+        For i = 2 To LastLine
+            'GATHER OPEN VALUE ON INTIAL TICKER
+            If i = 2 Then
+                TickerOpen = ws.Cells(i, 3).Value
+            End If
+            
+            'GATHER TICKER
+            Ticker = ws.Cells(i, 1).Value
+            'SUM VOLUME
+            VolumeCount = VolumeCount + ws.Cells(i, 7).Value
+            'CHECK NEXT LINE, CHECK IF SAME TICKER
+            
+            If (ws.Cells(i + 1, 1).Value <> Ticker) Then
+                'FIND LAST LINE OF H
+                LastLineTotalVol = ws.Cells(Rows.Count, 8).End(xlUp).Row + 1
+                'SET TICKER TO H
+                ws.Cells(LastLineTotalVol, 8).Value = Ticker
+                'SET TOTAL VOL TO I
+                ws.Cells(LastLineTotalVol, 9).Value = VolumeCount
+                'GATHER CLOSE VALUE
+                TickerClose = ws.Cells(i, 6).Value
+                
+                'CHECK FOR VALID DATA
+                If (TickerOpen <> 0 And TickerClose <> 0) Then
+                    'OUTPUT YEAR CHANGE FOR CURRENT TICKER
+                    ws.Cells(LastLineTotalVol, 10).Value = TickerClose - TickerOpen
+                    'OUTPUT PERCENT CHANGE FOR CURRENT TICKER
+                    OpenCloseDifference = TickerClose - TickerOpen
+                    PercentDecimal = OpenCloseDifference / TickerOpen
+                    PercentDecimal = PercentDecimal * 100
+                    ws.Cells(LastLineTotalVol, 11).Value = PercentDecimal
+                    'SET COLORS
+                    If ws.Cells(LastLineTotalVol, 10).Value < 0 Then
+                        ws.Cells(LastLineTotalVol, 10).Interior.ColorIndex = 3
+                    End If
+                    If ws.Cells(LastLineTotalVol, 10).Value > 0 Then
+                        ws.Cells(LastLineTotalVol, 10).Interior.ColorIndex = 4
+                    End If
+                    
+                Else
+                    'AVOID DEVISION BY 0 ERROR
+                    ws.Cells(LastLineTotalVol, 10).Value = 0
+                    ws.Cells(LastLineTotalVol, 11).Value = 0
+                End If
+                
+                'GATHER NEXT TICKER'S OPEN VALUE
+                TickerOpen = ws.Cells(i + 1, 3).Value
+                'RESET VARS
+                TickerClose = 0
+                VolumeCount = 0
+
+            End If
+        Next i
+        '
+        '
+        'End of H through K output
+        
+        
+        
+        'Begin Bonus
+        '
+        '
+        'Last line of new data
+        LastLine = ws.Cells(Rows.Count, 8).End(xlUp).Row + 1
+        'set vars
+        Greatest_Vol = 0
+        Greatest_Percent_Increase = 0
+        Greatest_Percent_Decrease = 99999999
+        Greatest_Vol_Ticker = ""
+        Greatest_Percent_Increase_Ticker = ""
+        Greatest_Percent_Decrease_Ticker = ""
+        'loop through new data
+        For i = 2 To LastLine
+            'gather summary values
+            If ws.Cells(i, 9).Value > Greatest_Vol Then
+                Greatest_Vol = ws.Cells(i, 9).Value
+                Greatest_Vol_Ticker = ws.Cells(i, 8).Value
+            End If
+            
+            If ws.Cells(i, 11).Value > Greatest_Percent_Increase Then
+                Greatest_Percent_Increase = ws.Cells(i, 11).Value
+                Greatest_Percent_Increase_Ticker = ws.Cells(i, 8).Value
+            End If
+            
+            If (ws.Cells(i, 11).Value < Greatest_Percent_Decrease) Then
+                Greatest_Percent_Decrease = ws.Cells(i, 11).Value
+                Greatest_Percent_Decrease_Ticker = ws.Cells(i, 8).Value
+            End If
+            
+        Next i
+        'output summary values
+        ws.Range("P2").Value = Greatest_Percent_Increase_Ticker
+        ws.Range("Q2").Value = Greatest_Percent_Increase
+        
+        ws.Range("Q3").Value = Greatest_Percent_Decrease
+        ws.Range("P3").Value = Greatest_Percent_Decrease_Ticker
+        
+        ws.Range("Q4").Value = Greatest_Vol
+        ws.Range("P4").Value = Greatest_Vol_Ticker
+        ws.Columns("A:Q").AutoFit
+    Next ws
+
+
+End Sub
+
+
+'Hope python is faster...
+
